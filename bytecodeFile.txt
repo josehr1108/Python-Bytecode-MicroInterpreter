@@ -1,0 +1,14 @@
+calcularpromedioventas():
+0	LOAD_CONST                  100
+1	LOAD_CONST               	200
+2	LOAD_CONST               	300
+3	LOAD_CONST               	400
+4	LOAD_CONST               	500
+5	BUILD_LIST               	5
+6	STORE_FAST               	ventas
+
+promedio(cualquier_arreglo):
+17	LOAD_GLOBAL		    len
+18	LOAD_FAST			cualquier_arreglo
+19	CALL_FUNCTION		1
+20	STORE_FAST			tam
