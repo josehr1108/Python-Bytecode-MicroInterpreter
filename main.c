@@ -43,6 +43,7 @@ struct Stack{
     struct Stack * next;
 }*mainStack,*tempStack;
 
+/**************************************  Funciones para las lineas del archivo  *************************************************/
 
 void insertFunction(struct Function ** functionP){
     struct Function * function = *functionP;
@@ -210,6 +211,8 @@ void parseLineAndSave(char * line){
     }
 }
 
+/**************************************  FUNCIONES USO GENERAL  *************************************************/
+
 void imprimeFunciones(){
     struct Function * current = firstFunction;
     while(current != NULL){
@@ -249,6 +252,113 @@ void imprimeFunciones(){
     }
 }
 
+void push(void * data,int type,struct Stack ** stackDestiny){
+    struct Stack * nn = (struct Stack *) malloc(sizeof(struct Stack));
+
+    nn->next = NULL;
+    nn->type = type;
+    if(type == 3){
+        nn->value = malloc(sizeof(data));
+        memcpy(nn->value,data,sizeof(data));
+    } else{
+        nn->value = malloc(strlen(data));
+        strcpy(nn->value,data);
+    }
+
+    if(*stackDestiny == NULL){
+        *stackDestiny = nn;
+    } else{    //insercion al inicio
+        nn->next = *stackDestiny;
+        *stackDestiny = nn;
+    }
+}
+
+struct Stack * pop(struct Stack ** stack){
+    struct Stack * temp = *stack;
+    struct Stack * second = temp->next;
+
+    temp->next = NULL;
+    *stack = second;
+
+    return temp;
+}
+
+void pruebaLista(){
+    struct Stack * nodoStack = pop(&mainStack);
+    if(nodoStack->type == 3){
+        struct List * lista = (struct List *)nodoStack->value;
+        struct List * siguiente = lista->next;
+    }
+}
+
+/**************************************  FUNCIONES BYTECODE  *************************************************/
+
+void buildList(int elementsAmount){
+    struct List * list = (struct List *) malloc(sizeof(struct List));
+    struct Stack * node = pop(&mainStack);
+    list->next = NULL;
+    list->element = malloc(sizeof(node->value));
+    strcpy(list->element,node->value);
+    list->elementType = node->type;
+
+    while(elementsAmount != 1){
+        struct Stack * nextNode = pop(&mainStack);
+        struct List * listItem = (struct List *) malloc(sizeof(struct List));
+        listItem->next = NULL;
+        listItem->element = malloc(sizeof(nextNode->value));
+        strcpy(listItem->element,nextNode->value);
+        listItem->elementType = nextNode->type;
+
+        struct List * temp = list;
+        while(temp->next != NULL){
+            temp = temp->next;
+        }
+        temp->next = listItem;
+
+        elementsAmount--;
+    }
+    push(list,3,&mainStack);
+    pruebaLista();
+}
+
+void binarySubstract(){
+    struct Stack * first = pop(&mainStack);
+    struct Stack * second = pop(&mainStack);
+
+    if((first->type == 2)&&(second->type == 2)){
+        int * firstOperand = (int*)first->value;
+        int * secondOperand = (int*)second->value;
+
+        int res = *firstOperand - *secondOperand;
+        char * resText[10];
+        itoa(res,resText,10);
+
+        push(resText,2,&mainStack);
+    }
+    free(first);
+    free(second);
+}
+
+void readByteCode(){
+    struct Instruction * instructions = firstFunction->functionInstructions;
+    while(instructions != NULL){
+        if(strcmp(instructions->instructionName,"LOAD_CONST") == 0){
+            push(instructions->instructionName,instructions->paramType,&mainStack);
+        }
+        else if(strcmp(instructions->instructionName,"BUILD_LIST") == 0){
+            char * numberText = (char *)instructions->param;
+            int number = atoi(numberText);
+            buildList(number);
+        } else if(strcmp(instructions->instructionName,"STORE_FAST") == 0) {
+            char *nameParam = (char *) instructions->param;
+            //storeFast(nameParam);
+        }else if(strcmp(instructions->instructionName,"BINARY_SUBSTRACT") == 0) {
+            binarySubstract();
+        }
+        instructions = instructions->next;
+    }
+}
+
 void readFile(){
     FILE * file;
     char * line;
@@ -268,5 +378,7 @@ void readFile(){
 int main() {
     readFile();
     imprimeFunciones();
+    readByteCode();
     return 0;
 }
+//Tipos de datos: string:1 - int:2 - char:3 - lista:4 -
