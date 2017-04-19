@@ -30,11 +30,11 @@ struct List{
     struct List * next;
 };
 // Almacen de datos para guardar variable, funciones y listas
-struct DataWarehouse{
+struct DataWareHouse{
     char* name;
     int type;
     void * value;
-    struct DataWarehouse * next;
+    struct DataWareHouse * next;
 }*dataHeader;
 //Pila de datos
 struct Stack{
@@ -175,20 +175,27 @@ void extractInstruction(char * charAt){
     }//llega al parametro
     if(*charAt == '\n'){ //no hay parametros
         newInstruction->paramType = 0;
-        //createAndSaveInstruction(instNumber,instName,NULL,0,lastFunction); // 1 para cadenas,2 enteros, 0 sin parametros
-    }
-    else if(!(*charAt >= 48 && *charAt <=57)){  //aca se capta cuando el parametro es una cadena, ya que no empieza con numero
+    } else if(*charAt == 0) {
+        newInstruction->paramType = 0;
+        newInstruction->param = NULL;
+        insertInstruction(&newInstruction);
+        return;
+    } else if(!(*charAt >= 48 && *charAt <=57) || (*charAt == 34) || (*charAt == 39)){  //aca se capta cuando el parametro es una cadena, ya que no empieza con numero
         newInstruction->paramType = 1;
-        //createAndSaveInstruction(instNumber,instName,instParam,1,lastFunction); // 1 para cadenas,2 enteros, 0 sin parametros
+        if((*charAt == 34) || (*charAt == 39)){  //se brinca la primera comilla doble o comilla simple
+            charAt++;
+        }
     }
     else{  // si no es cadena, es numero
         newInstruction->paramType = 2;
-        //createAndSaveInstruction(instNumber,instName,instParam,2,lastFunction); // 1 para cadenas,2 enteros, 0 sin parametros
     }
     char instParam[50] = {};
 
     while(*charAt != 10){
-        if(*charAt == 0){
+        if((*charAt == 0)||(*charAt == '/')||(*charAt == 32)||(*charAt == 34)||(*charAt == 39)){ // {0 = '\0', 32 = string vacio, 34= '"'}
+            if(instParam[1] == 0){ //si es de un solo caracter, sobreescribe el tipo
+                newInstruction->paramType = 3;
+            }
             break;
         }
         instParam[paramCounter] = *charAt;
@@ -258,8 +265,7 @@ void push(void * data,int type,struct Stack ** stackDestiny){
     nn->next = NULL;
     nn->type = type;
     if(type == 3){
-        nn->value = malloc(sizeof(data));
-        memcpy(nn->value,data,sizeof(data));
+        nn->value = data;
     } else{
         nn->value = malloc(strlen(data));
         strcpy(nn->value,data);
@@ -292,6 +298,15 @@ void pruebaLista(){
 }
 
 /**************************************  FUNCIONES BYTECODE  *************************************************/
+struct DataWareHouse * getVarByName(char * nameP){
+    struct DataWareHouse * tempVar = dataHeader;
+    while (tempVar != NULL){
+        if(strcmp(tempVar->name,nameP) == 0){
+            return tempVar;
+        }
+        tempVar = tempVar->next;
+    }
+}
 
 void buildList(int elementsAmount){
     struct List * list = (struct List *) malloc(sizeof(struct List));
@@ -318,42 +333,205 @@ void buildList(int elementsAmount){
         elementsAmount--;
     }
     push(list,3,&mainStack);
-    pruebaLista();
 }
 
 void binarySubstract(){
     struct Stack * first = pop(&mainStack);
     struct Stack * second = pop(&mainStack);
 
-    if((first->type == 2)&&(second->type == 2)){
-        int * firstOperand = (int*)first->value;
-        int * secondOperand = (int*)second->value;
+    char * firstOperandChar = (char*)first->value;
+    char * secondOperandChar = (char*)second->value;
 
-        int res = *firstOperand - *secondOperand;
-        char * resText[10];
-        itoa(res,resText,10);
+    int firstOperand = 0;
+    int secondOperand = 0;
 
-        push(resText,2,&mainStack);
+    if(first->type == 1){
+        struct DataWareHouse * tempVar = getVarByName(firstOperandChar);
+        char * varValueChar = (char *)tempVar->value;
+        firstOperand = atoi(varValueChar);
+    } else{
+        firstOperand = atoi(firstOperandChar);
     }
+
+    if(second->type == 1){
+        struct DataWareHouse * tempVar2 = getVarByName(secondOperandChar);
+        char * varValueChar2 = (char *)tempVar2->value;
+        secondOperand = atoi(varValueChar2);
+    } else{
+        secondOperand = atoi(secondOperandChar);
+    }
+
+    int substract = firstOperand - secondOperand;
+    char * substractToChar;
+    itoa(substract,substractToChar,10);
+    push(substractToChar,2,&mainStack);
+
     free(first);
     free(second);
+}
+
+void binaryAdd(){
+    struct Stack * first = pop(&mainStack);
+    struct Stack * second = pop(&mainStack);
+
+    char * firstOperandChar = (char*)first->value;
+    char * secondOperandChar = (char*)second->value;
+
+    int firstOperand = 0;
+    int secondOperand = 0;
+
+    if(first->type == 1){
+        struct DataWareHouse * tempVar = getVarByName(firstOperandChar);
+        char * varValueChar = (char *)tempVar->value;
+        firstOperand = atoi(varValueChar);
+    } else{
+        firstOperand = atoi(firstOperandChar);
+    }
+
+    if(second->type == 1){
+        struct DataWareHouse * tempVar2 = getVarByName(secondOperandChar);
+        char * varValueChar2 = (char *)tempVar2->value;
+        secondOperand = atoi(varValueChar2);
+    } else{
+        secondOperand = atoi(secondOperandChar);
+    }
+
+    int sum = firstOperand + secondOperand;
+    char * sumToChar;
+    itoa(sum,sumToChar,10);
+    push(sumToChar,2,&mainStack);
+
+    free(first);
+    free(second);
+}
+
+void binaryMultiply(){
+    struct Stack * first = pop(&mainStack);
+    struct Stack * second = pop(&mainStack);
+
+    char * firstOperandChar = (char*)first->value;
+    char * secondOperandChar = (char*)second->value;
+
+    int firstOperand = 0;
+    int secondOperand = 0;
+
+    if(first->type == 1){
+        struct DataWareHouse * tempVar = getVarByName(firstOperandChar);
+        char * varValueChar = (char *)tempVar->value;
+        firstOperand = atoi(varValueChar);
+    } else{
+        firstOperand = atoi(firstOperandChar);
+    }
+
+    if(second->type == 1){
+        struct DataWareHouse * tempVar2 = getVarByName(secondOperandChar);
+        char * varValueChar2 = (char *)tempVar2->value;
+        secondOperand = atoi(varValueChar2);
+    } else{
+        secondOperand = atoi(secondOperandChar);
+    }
+
+    int mult = firstOperand * secondOperand;
+    char * multToChar;
+    itoa(mult,multToChar,10);
+    push(multToChar,2,&mainStack);
+
+    free(first);
+    free(second);
+}
+
+void binaryDivide(){
+    struct Stack * first = pop(&mainStack);
+    struct Stack * second = pop(&mainStack);
+
+    char * firstOperandChar = (char*)first->value;
+    char * secondOperandChar = (char*)second->value;
+
+    int firstOperand = 0;
+    int secondOperand = 0;
+
+    if(first->type == 1){
+        struct DataWareHouse * tempVar = getVarByName(firstOperandChar);
+        char * varValueChar = (char *)tempVar->value;
+        firstOperand = atoi(varValueChar);
+    } else{
+        firstOperand = atoi(firstOperandChar);
+    }
+
+    if(second->type == 1){
+        struct DataWareHouse * tempVar2 = getVarByName(secondOperandChar);
+        char * varValueChar2 = (char *)tempVar2->value;
+        secondOperand = atoi(varValueChar2);
+    } else{
+        secondOperand = atoi(secondOperandChar);
+    }
+
+    int divide = firstOperand / secondOperand;
+    char * divideToChar;
+    itoa(divide,divideToChar,10);
+    push(divideToChar,2,&mainStack);
+
+    free(first);
+    free(second);
+}
+
+void loadFast(char * varName){
+    struct DataWareHouse * currentVariable = dataHeader;
+    while (currentVariable != NULL){
+        if(strcmp(currentVariable->name,varName) == 0){
+            push(currentVariable->value,currentVariable->type,&mainStack);
+            return;
+        }
+        currentVariable = currentVariable->next;
+    }
+}
+
+void storeFast(char * name){
+    struct Stack * node = pop(&mainStack);
+    struct DataWareHouse * variable = (struct DataWareHouse *) malloc(sizeof(struct DataWareHouse));
+    variable->next = NULL;
+    variable->type = node->type;
+    variable->name = malloc(strlen(name));
+    strcpy(variable->name, name);
+    if(variable->type == 3){
+        variable->value = node;
+    }else {
+        char * valueAsCharArray = (char *) node->value;
+        variable->value = malloc(sizeof(node->value));
+        strcpy(variable->value, node->value);
+    }
+
+    if(dataHeader == NULL){
+        dataHeader = variable;
+    } else{       //insercion al inicio
+        variable->next = dataHeader;
+        dataHeader = variable;
+    }
 }
 
 void readByteCode(){
     struct Instruction * instructions = firstFunction->functionInstructions;
     while(instructions != NULL){
         if(strcmp(instructions->instructionName,"LOAD_CONST") == 0){
-            push(instructions->instructionName,instructions->paramType,&mainStack);
-        }
-        else if(strcmp(instructions->instructionName,"BUILD_LIST") == 0){
+            push(instructions->param,instructions->paramType,&mainStack);
+        } else if(strcmp(instructions->instructionName,"BUILD_LIST") == 0){
             char * numberText = (char *)instructions->param;
             int number = atoi(numberText);
             buildList(number);
         } else if(strcmp(instructions->instructionName,"STORE_FAST") == 0) {
             char *nameParam = (char *) instructions->param;
-            //storeFast(nameParam);
-        }else if(strcmp(instructions->instructionName,"BINARY_SUBSTRACT") == 0) {
+            storeFast(nameParam);
+        } else if(strcmp(instructions->instructionName,"LOAD_FAST") == 0) {
+            char * varName = (char *)instructions->param;
+            loadFast(varName);
+        } else if(strcmp(instructions->instructionName,"BINARY_SUBSTRACT") == 0) {
             binarySubstract();
+        } else if(strcmp(instructions->instructionName,"BINARY_ADD") == 0) {
+            binaryAdd();
+        }else if(strcmp(instructions->instructionName,"BINARY_MULTIPLY") == 0) {
+            binaryMultiply();
+        } else if(strcmp(instructions->instructionName,"BINARY_DIVIDE") == 0) {
+            binaryDivide();
         }
         instructions = instructions->next;
     }
@@ -381,4 +559,5 @@ int main() {
     readByteCode();
     return 0;
 }
+
 //Tipos de datos: string:1 - int:2 - char:3 - lista:4 -

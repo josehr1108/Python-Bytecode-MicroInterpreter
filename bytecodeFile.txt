@@ -6,9 +6,6 @@ calcularpromedioventas():
 4	LOAD_CONST               	500
 5	BUILD_LIST               	5
 6	STORE_FAST               	ventas
-
-promedio(cualquier_arreglo):
-17	LOAD_GLOBAL		    len
-18	LOAD_FAST			cualquier_arreglo
-19	CALL_FUNCTION		1
-20	STORE_FAST			tam
+7	LOAD_CONST               	10
+8	LOAD_CONST               	90
+9	BINARY_DIVIDE
