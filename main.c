@@ -264,7 +264,7 @@ void push(void * data,int type,struct Stack ** stackDestiny){
 
     nn->next = NULL;
     nn->type = type;
-    if(type == 3){
+    if((type == 4) || (type == 5)){  //si es lista o funcion guarda la referencia
         nn->value = data;
     } else{
         nn->value = malloc(strlen(data));
@@ -306,6 +306,23 @@ struct DataWareHouse * getVarByName(char * nameP){
         }
         tempVar = tempVar->next;
     }
+    return NULL;
+}
+
+struct Function * getFunctionByName(char * nameP){
+    struct Function * tempVar = firstFunction;
+    while (tempVar != NULL){
+        if(strcmp(tempVar->functionName,nameP) == 0){
+            return tempVar;
+        }
+        tempVar = tempVar->next;
+    }
+    return NULL;
+}
+
+void loadGlobal(char * functionNameP){
+    struct Function * function = getFunctionByName(functionNameP);
+    push(function,5,&mainStack);
 }
 
 void buildList(int elementsAmount){
@@ -332,7 +349,7 @@ void buildList(int elementsAmount){
 
         elementsAmount--;
     }
-    push(list,3,&mainStack);
+    push(list,4,&mainStack);
 }
 
 void binarySubstract(){
@@ -493,7 +510,7 @@ void storeFast(char * name){
     variable->type = node->type;
     variable->name = malloc(strlen(name));
     strcpy(variable->name, name);
-    if(variable->type == 3){
+    if(variable->type == 4){
         variable->value = node;
     }else {
         char * valueAsCharArray = (char *) node->value;
@@ -524,6 +541,9 @@ void readByteCode(){
         } else if(strcmp(instructions->instructionName,"LOAD_FAST") == 0) {
             char * varName = (char *)instructions->param;
             loadFast(varName);
+        } else if(strcmp(instructions->instructionName,"LOAD_GLOBAL") == 0) {
+            char * param = (char *)instructions->param;
+            loadGlobal(param);
         } else if(strcmp(instructions->instructionName,"BINARY_SUBSTRACT") == 0) {
             binarySubstract();
         } else if(strcmp(instructions->instructionName,"BINARY_ADD") == 0) {
@@ -560,4 +580,4 @@ int main() {
     return 0;
 }
 
-//Tipos de datos: string:1 - int:2 - char:3 - lista:4 -
+//Tipos de datos: string:1 - int:2 - char:3 - lista:4 - funcion:5

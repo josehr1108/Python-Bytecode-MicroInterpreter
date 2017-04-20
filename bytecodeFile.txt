@@ -1,5 +1,5 @@
 calcularpromedioventas():
-0	LOAD_CONST                  100
+0	LOAD_CONST                  '1'
 1	LOAD_CONST               	200
 2	LOAD_CONST               	300
 3	LOAD_CONST               	400
@@ -9,3 +9,4 @@ calcularpromedioventas():
 7	LOAD_CONST               	10
 8	LOAD_CONST               	90
 9	BINARY_DIVIDE
+7	LOAD_GLOBAL		    calcularpromedioventas
