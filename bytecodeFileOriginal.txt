@@ -1,7 +1,7 @@
 calcularpromedioventas():
 0	LOAD_CONST                  100
 1	LOAD_CONST               	200
-2	LOAD_CONST               	300  //joda
+2	LOAD_CONST               	300
 3	LOAD_CONST               	400
 4	LOAD_CONST               	500
 5	BUILD_LIST               	5

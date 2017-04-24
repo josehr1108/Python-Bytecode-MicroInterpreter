@@ -8,9 +8,10 @@ struct Function{
     struct Instruction * functionInstructions;
     struct Parameter * parameterList;
     struct Function * next;
-}*firstFunction,*lastFunction;
+}*firstFunction,*lastFunction,currentFunction;
 //Estructura para los parametros de las funciones
 struct Parameter{
+    char * paramName;
     void * paramValue;
     int paramType;
     struct Parameter * next;
@@ -107,8 +108,9 @@ void extractFunction(char * charAt){
         }
         struct Parameter * newParam = (struct Parameter*)malloc(sizeof(struct Parameter));
         newParam->next = NULL;
-        newParam->paramValue = malloc(30);
-        strcpy(newParam->paramValue,paramHolder);
+        newParam->paramValue = NULL;
+        newParam->paramName = malloc(strlen(paramHolder));
+        strcpy(newParam->paramName,paramHolder);
         if(paramHolder[0] >= 48 && paramHolder[0] <= 57){//si el parametro empieza con numeros
             newParam->paramType = 2;
         }else{ //sino, es un string o nombre de variable
@@ -219,7 +221,6 @@ void parseLineAndSave(char * line){
 }
 
 /**************************************  FUNCIONES USO GENERAL  *************************************************/
-
 void imprimeFunciones(){
     struct Function * current = firstFunction;
     while(current != NULL){
@@ -228,8 +229,7 @@ void imprimeFunciones(){
         printf("Parametros: ");
         if(params != NULL){
             while(params != NULL){
-                char * param = (char *) params->paramValue;
-                printf("%s,",param);
+                printf("%s,",params->paramName);
                 params = params->next;
             }
         } else{
@@ -288,7 +288,48 @@ struct Stack * pop(struct Stack ** stack){
 
     return temp;
 }
+/*
+struct Parameter * createNewParamList(int amountOfParams){
+    struct Parameter * tempParamList = (struct Parameter *)malloc(sizeof(struct Parameter));
+    tempParamList->paramName = NULL;
+    tempParamList->next = NULL;
+    tempParamList->paramValue = NULL;
 
+    struct Stack * node = pop(&mainStack);
+    if(node->type == 4){
+        tempParamList->paramValue = node->value;
+        tempParamList->paramType = 4;
+    } else{
+        tempParamList->paramValue = malloc(strlen(node->value));
+        strcpy(tempParamList->paramValue,node->value);
+        tempParamList->paramType = node->type;
+    }
+    amountOfParams--;
+
+    while (amountOfParams != 0){
+        struct Parameter * newParam = (struct Parameter *)malloc(sizeof(struct Parameter));
+        newParam->next = NULL;
+        newParam->paramName = NULL;
+
+        struct Stack * newNode = pop(&mainStack);
+        if(newNode->type == 4){
+            tempParamList->paramValue = newNode->value;
+            tempParamList->paramType = 4;
+        } else{
+            tempParamList->paramValue = malloc(strlen(newNode->value));
+            strcpy(tempParamList->paramValue,newNode->value);
+            tempParamList->paramType = newNode->type;
+        }
+        struct Parameter * copyParamList = tempParamList;
+        while(copyParamList->next != NULL){
+            copyParamList = copyParamList->next;
+        }
+        copyParamList->next = newParam;
+        amountOfParams--;
+    }
+    return tempParamList;
+}
+*/
 void pruebaLista(){
     struct Stack * nodoStack = pop(&mainStack);
     if(nodoStack->type == 3){
@@ -525,7 +566,16 @@ void storeFast(char * name){
         dataHeader = variable;
     }
 }
+/*
+void callFunction(int amountOfParams){
+    if(amountOfParams > 0){
+        struct Parameter * newParamList = createNewParamList(amountOfParams);
 
+    }
+
+    //Terminar
+}
+*/
 void readByteCode(){
     struct Instruction * instructions = firstFunction->functionInstructions;
     while(instructions != NULL){
@@ -548,11 +598,15 @@ void readByteCode(){
             binarySubstract();
         } else if(strcmp(instructions->instructionName,"BINARY_ADD") == 0) {
             binaryAdd();
-        }else if(strcmp(instructions->instructionName,"BINARY_MULTIPLY") == 0) {
+        } else if(strcmp(instructions->instructionName,"BINARY_MULTIPLY") == 0) {
             binaryMultiply();
         } else if(strcmp(instructions->instructionName,"BINARY_DIVIDE") == 0) {
             binaryDivide();
-        }
+        }/* else if(strcmp(instructions->instructionName,"CALL_FUNCTION") == 0){
+            char * param = (char *)instructions->param;
+            int  amountOfParams = atoi(param);
+            callFunction(amountOfParams);
+        }*/
         instructions = instructions->next;
     }
 }
@@ -561,7 +615,7 @@ void readFile(){
     FILE * file;
     char * line;
 
-    file = fopen("C:\\Users\\Jose Herrera\\CLionProjects\\NuevoInterprete\\bytecodeFile.txt","r");
+    file = fopen("C:\\Users\\Jose Herrera\\CLionProjects\\NuevoInterprete\\bytecodeFileOriginal.txt","r");
     if(file == NULL){
         printf("Error al abrir archivo, verifique la direccion.");
     }else{
