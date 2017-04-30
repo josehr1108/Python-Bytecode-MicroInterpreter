@@ -6,12 +6,10 @@ calcularpromedioventas():
 4	LOAD_CONST               	500
 5	BUILD_LIST               	5
 6	STORE_FAST               	ventas
-
 7	LOAD_GLOBAL		    promedio
 8	LOAD_FAST			ventas		//parámetro real
 9	CALL_FUNCTION		1		//se debe llevar el parámetro
 10	STORE_FAST			prom
-
 11	LOAD_GLOBAL              	print
 12	LOAD_CONST       		'El promedio de las ventas es: '
 13	CALL_FUNCTION		1
@@ -19,54 +17,44 @@ calcularpromedioventas():
 15	LOAD_FAST			prom
 16	CALL_FUNCTION		1
 
-promedio(cualquier_arreglo):	//tiene que cargarse el valor del parámetro real en la variable formal
+promedio(cualquier_arreglo):	//tiene que cargarse el valor del parámetro real en la variable forma
 17	LOAD_GLOBAL		    len
 18	LOAD_FAST			cualquier_arreglo
 19	CALL_FUNCTION		1
 20	STORE_FAST			tam
-
 21	LOAD_CONST			0
 22	STORE_FAST			resultado
-
 23	LOAD_CONST			0
 24	STORE_FAST			cont
-
 25	LOAD_CONST			0
 26	STORE_FAST			sumatoria
-
 28	LOAD_FAST			cont
 29	LOAD_FAST               	tam
 30	LOAD_CONST  		1
 31	BINARY_SUBSTRACT
 32	COMPARE_OP			<=
 33	JUMP_IF_FALSE		37
-
 34	LOAD_FAST			sumatoria
 35	LOAD_FAST			cualquier_arreglo
 36	LOAD_FAST			cont
 37	BINARY_SUBSCR
 38	BINARY_ADD
 39	STORE_FAST			sumatoria
-
 32	LOAD_FAST			cont
 33	LOAD_CONST			1
 34	BINARY_ADD
 35	STORE_FAST			cont
 36	JUMP_ABSOLUTE        	20
-
 37	LOAD_FAST                	tam
 38	LOAD_CONST			0
 39	COMPARE_OP			>
 40	JUMP_IF_FALSE		45
-
 41	LOAD_FAST			sumatoria
 42	LOAD_FAST			tam
 43	BINARY_DIVIDE
 44	STORE_FAST			resultado
-
 45	LOAD_FAST			resultado
 46	RETURN_VALUE
-
 Main():
 47	LOAD_GLOBAL		calcularpromedioventas
 48	CALL_FUNCTION        	0

@@ -8,7 +8,7 @@ struct Function{
     struct Instruction * functionInstructions;
     struct Parameter * parameterList;
     struct Function * next;
-}*firstFunction,*lastFunction,currentFunction;
+}*firstFunction,*lastFunction,*currentFunction;
 //Estructura para los parametros de las funciones
 struct Parameter{
     char * paramName;
@@ -42,7 +42,7 @@ struct Stack{
     void * value;
     int type;
     struct Stack * next;
-}*mainStack,*tempStack;
+}*mainStack,*callsStack;
 
 /**************************************  Funciones para las lineas del archivo  *************************************************/
 
@@ -52,6 +52,7 @@ void insertFunction(struct Function ** functionP){
     if(firstFunction == NULL){
         firstFunction = function;
         lastFunction = function;
+        currentFunction = function;
     }else{
         lastFunction->next = function;
         lastFunction = lastFunction->next;
@@ -175,9 +176,7 @@ void extractInstruction(char * charAt){
     while((*charAt == ' ') || (*charAt == '\t')){
         charAt++;
     }//llega al parametro
-    if(*charAt == '\n'){ //no hay parametros
-        newInstruction->paramType = 0;
-    } else if(*charAt == 0) {
+    if((*charAt == '\n')||(*charAt == 0)){ //no hay parametros
         newInstruction->paramType = 0;
         newInstruction->param = NULL;
         insertInstruction(&newInstruction);
@@ -194,7 +193,7 @@ void extractInstruction(char * charAt){
     char instParam[50] = {};
 
     while(*charAt != 10){
-        if((*charAt == 0)||(*charAt == '/')||(*charAt == 32)||(*charAt == 34)||(*charAt == 39)){ // {0 = '\0', 32 = string vacio, 34= '"'}
+        if((*charAt == 0)||(*charAt == '/')||(*charAt == 32)||(*charAt == 34)||(*charAt == 39)||(*charAt == '\t')){ // {0 = '\0', 32 = string vacio, 34= '"'}
             if(instParam[1] == 0){ //si es de un solo caracter, sobreescribe el tipo
                 newInstruction->paramType = 3;
             }
@@ -288,7 +287,7 @@ struct Stack * pop(struct Stack ** stack){
 
     return temp;
 }
-/*
+
 struct Parameter * createNewParamList(int amountOfParams){
     struct Parameter * tempParamList = (struct Parameter *)malloc(sizeof(struct Parameter));
     tempParamList->paramName = NULL;
@@ -329,7 +328,7 @@ struct Parameter * createNewParamList(int amountOfParams){
     }
     return tempParamList;
 }
-*/
+
 void pruebaLista(){
     struct Stack * nodoStack = pop(&mainStack);
     if(nodoStack->type == 3){
@@ -363,6 +362,7 @@ struct Function * getFunctionByName(char * nameP){
 
 void loadGlobal(char * functionNameP){
     struct Function * function = getFunctionByName(functionNameP);
+    currentFunction = function;
     push(function,5,&mainStack);
 }
 
@@ -566,18 +566,33 @@ void storeFast(char * name){
         dataHeader = variable;
     }
 }
-/*
+
 void callFunction(int amountOfParams){
     if(amountOfParams > 0){
         struct Parameter * newParamList = createNewParamList(amountOfParams);
+        struct Stack * functionStackNode = pop(&mainStack);
+        struct Function * function = (struct Function *)functionStackNode->value;
 
+        struct Parameter * tempNew = newParamList;
+        struct Parameter * currentFunctParams = function->parameterList;
+        while(currentFunctParams != NULL){
+            tempNew->paramName = malloc(strlen(currentFunctParams->paramName));
+            strcpy(tempNew->paramName,currentFunctParams->paramName);
+            currentFunctParams = currentFunctParams->next;
+            tempNew = tempNew->next;
+        }
+        currentFunction->parameterList = newParamList; //setea a null
     }
-
-    //Terminar
 }
-*/
+
+void saveCallBreakpoint(int lineNumber){
+    char * numChar;
+    itoa(lineNumber,numChar,10);
+    push(numChar,7,&callsStack);
+}
+
 void readByteCode(){
-    struct Instruction * instructions = firstFunction->functionInstructions;
+    struct Instruction * instructions = currentFunction->functionInstructions;
     while(instructions != NULL){
         if(strcmp(instructions->instructionName,"LOAD_CONST") == 0){
             push(instructions->param,instructions->paramType,&mainStack);
@@ -602,11 +617,14 @@ void readByteCode(){
             binaryMultiply();
         } else if(strcmp(instructions->instructionName,"BINARY_DIVIDE") == 0) {
             binaryDivide();
-        }/* else if(strcmp(instructions->instructionName,"CALL_FUNCTION") == 0){
+        } else if(strcmp(instructions->instructionName,"CALL_FUNCTION") == 0){
             char * param = (char *)instructions->param;
+            int instructionNum = instructions->instructionNum;
+            saveCallBreakpoint(instructionNum);
             int  amountOfParams = atoi(param);
             callFunction(amountOfParams);
-        }*/
+            readByteCode();
+        }
         instructions = instructions->next;
     }
 }
@@ -634,4 +652,4 @@ int main() {
     return 0;
 }
 
-//Tipos de datos: string:1 - int:2 - char:3 - lista:4 - funcion:5
+//Tipos de datos: string:1 - int:2 - char:3 - lista:4 - funcion:5 - numInstruccionLLamada: 7(int)
